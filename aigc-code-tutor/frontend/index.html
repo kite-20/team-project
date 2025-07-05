@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>智能代码生成器</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #34495e;
+        }
+        select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #result {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            font-family: 'Consolas', 'Courier New', monospace;
+            min-height: 200px;
+            max-height: 400px;
+            overflow: auto;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 15px;
+        }
+        .error {
+            color: #e74c3c;
+            background: #fdeded;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>智能代码生成器</h1>
+        
+        <div class="form-group">
+            <label for="language">选择编程语言：</label>
+            <select id="language">
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+                <option value="c++">C++</option>
+                <option value="javascript">JavaScript</option>
+                <option value="c">C</option>
+                <option value="php">PHP</option>
+                <option value="go">Go</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="prompt">描述你想要的代码：</label>
+            <textarea id="prompt" placeholder="例如：实现一个快速排序函数，输入是一个整数列表"></textarea>
+        </div>
+        
+        <button onclick="generateCode()">生成代码</button>
+        
+        <div class="loading" id="loading">
+            正在生成代码，请稍候...
+        </div>
+        
+        <div class="form-group">
+            <label>生成的代码：</label>
+            <pre id="result">等待生成...</pre>
+        </div>
+        
+        <div id="error" class="error"></div>
+    </div>
+
+    <script>
+        async function generateCode() {
+            const prompt = document.getElementById('prompt').value;
+            const language = document.getElementById('language').value;
+            const resultElement = document.getElementById('result');
+            const loadingElement = document.getElementById('loading');
+            const errorElement = document.getElementById('error');
+            
+            // 清除之前的错误和结果
+            errorElement.textContent = '';
+            resultElement.textContent = '';
+            
+            if (!prompt) {
+                showError('请输入代码描述');
+                return;
+            }
+            
+            // 显示加载状态
+            loadingElement.style.display = 'block';
+            
+            try {
+                const response = await fetch('http://localhost:5000/generate_code', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        language: language
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    if (data.code) {
+                        resultElement.textContent = data.code;
+                    } else {
+                        showError('未返回代码');
+                    }
+                } else {
+                    showError(`错误: ${data.error || 'API请求失败'}`);
+                }
+            } catch (error) {
+                showError(`请求失败: ${error.message}`);
+            } finally {
+                // 隐藏加载状态
+                loadingElement.style.display = 'none';
+            }
+        }
+        
+        function showError(message) {
+            document.getElementById('error').textContent = message;
+        }
+    </script>
+</body>
+</html>
